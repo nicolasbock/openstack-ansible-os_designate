@@ -47,9 +47,9 @@
 
 - name: Test for log directory or link
   shell: |
-    if [ -h "/var/log/designate"  ]; then
-      chown -h {{ designate_system_user_name }}:{{ designate_system_group_name }} "/var/log/designate"
-      chown -R {{ designate_system_user_name }}:{{ designate_system_group_name }} "$(readlink /var/log/designate)"
+    if [ -h "{{ designate_log_dir }}"  ]; then
+      chown -h {{ designate_system_user_name }}:{{ designate_system_group_name }} "{{ designate_log_dir }}"
+      chown -R {{ designate_system_user_name }}:{{ designate_system_group_name }} "$(readlink {{ designate_log_dir }})"
     else
       exit 1
     fi
@@ -59,11 +59,13 @@
 
 - name: Create designate log dir
   file:
-    path: "/var/log/designate"
+    path: "{{ item.path }}"
     state: directory
-    owner: "{{ designate_system_user_name }}"
-    group: "{{ designate_system_group_name }}"
-    mode: "0755"
+    owner: "{{ item.owner|default(designate_system_user_name) }}"
+    group: "{{ item.group|default(designate_system_group_name) }}"
+    mode: "{{ item.mode|default('0755') }}"
+  with_items:
+    - { path: "{{ designate_log_dir }}" }
   when: log_dir.rc != 0
 
 - name: Drop sudoers file
